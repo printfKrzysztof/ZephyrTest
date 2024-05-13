@@ -1,0 +1,13 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    fragment@0 {
+        target-path = "/";
+        __overlay__ {
+            timers2: timers@40000000 {
+                st,prescaler = <0x100>; // Modified prescaler value
+            };
+        };
+    };
+};

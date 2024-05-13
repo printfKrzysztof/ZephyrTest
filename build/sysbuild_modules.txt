@@ -1,1 +1,0 @@
-"mcuboot":"/home/krzysztof/zephyrproject/bootloader/mcuboot":"/home/krzysztof/zephyrproject/bootloader/mcuboot/boot/zephyr/sysbuild"
