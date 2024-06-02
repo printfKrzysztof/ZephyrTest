@@ -1,5 +1,17 @@
 {
     "files.associations": {
-        "uart.h": "c"
+        "uart.h": "c",
+        "peripherals_init.h": "c",
+        "stdio.h": "c",
+        "cmsis_os.h": "c",
+        "typeinfo": "c",
+        "system_error": "c",
+        "threads_inc.h": "c",
+        "iomanip": "c",
+        "frame_controller.h": "c",
+        "counter.h": "c",
+        "string_view": "c",
+        "array": "c",
+        "string": "c"
     }
 }

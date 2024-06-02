@@ -1,0 +1,10 @@
+&timers2 {
+	st,prescaler = <0>;
+	counter {
+		status = "okay";
+	};
+};
+
+&usart2 {
+	current-speed = <38400>;
+};
