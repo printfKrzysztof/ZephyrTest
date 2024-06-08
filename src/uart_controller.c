@@ -1,42 +1,53 @@
 #include <threads_inc.h>
 #include <zephyr/kernel.h>
 
+static struct k_msgq uart_msgq;
+static uint8_t uart_msgq_buffer[64 * sizeof(uint8_t)];
+
+static void uart_rx_callback(const struct device *uart_dev, void *user_data)
+{
+	uint8_t c;
+
+	if (!uart_irq_update(uart_dev)) {
+		return;
+	}
+
+	if (!uart_irq_rx_ready(uart_dev)) {
+		return;
+	}
+
+	while (uart_fifo_read(uart_dev, &c, 1) == 1) {
+		k_msgq_put(&uart_msgq, &c, K_NO_WAIT);
+	}
+}
+
 int uart_receive(uint8_t *buffer, size_t length, int timeout)
 {
-	int received = 0;
-	int ret;
-	uint8_t c;
-	counter_start(counter_dev);
-	uint32_t start_time = get_time();
-	uint32_t end_time = start_time + counter_us_to_ticks(counter_dev, timeout * 1000);
+	k_msgq_init(&uart_msgq, uart_msgq_buffer, sizeof(uint8_t), 64);
 
-	while (get_time() < end_time) {
-		ret = uart_poll_in(uart2, &c);
-		if (ret == 0) {
-			buffer[received++] = c;
-			if (received == length) {
-				counter_stop(counter_dev);
-				return 0; // HAL_OK equivalent
-			}
-		} else if (ret == -1) {
-			osDelay(1); // Sleep for a bit to avoid busy-waiting
+	// Enable UART and set callback
+	uart_irq_callback_user_data_set(uart2, uart_rx_callback, NULL);
+	uart_irq_rx_enable(uart2);
+
+	for (size_t i = 0; i < length; i++) {
+		if (k_msgq_get(&uart_msgq, &buffer[i], K_MSEC(timeout)) != 0) {
+			// Disable UART receive
+			uart_irq_rx_disable(uart2);
+			uart_irq_callback_user_data_set(uart2, NULL, NULL);
+			return -1; // Timeout occurred
 		}
 	}
-	counter_stop(counter_dev);
-	return -1; // HAL_ERROR equivalent
+	// Disable UART receive
+	uart_irq_rx_disable(uart2);
+	uart_irq_callback_user_data_set(uart2, NULL, NULL);
+
+	return 0; // Reception successful
 }
 
 int uart_transmit(const uint8_t *buffer, size_t length, int timeout)
 {
-	size_t sent = 0;
-	uint32_t start_time = get_time();
-	uint32_t end_time = start_time + timeout;
 
-	while (sent < length && get_time() < end_time) {
-		uart_poll_out(uart2, buffer[sent]);
-		sent++;
+	for (int i = 0; i < length; i++) {
+		uart_poll_out(uart2, buffer[i]);
 	}
-
-	return (sent == length) ? 0 : -1; // Return 0 for success (HAL_OK equivalent), -1 for
-					  // failure (HAL_ERROR equivalent)
 }

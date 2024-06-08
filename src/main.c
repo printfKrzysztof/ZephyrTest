@@ -10,6 +10,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/__assert.h>
 #include <threads_inc.h>
+// #include <zephyr/sys/printk.h>
 
 struct counter_top_cfg top_cfg;
 uint32_t values[MAX_THREADS][MAX_TEST_PER_THREAD];

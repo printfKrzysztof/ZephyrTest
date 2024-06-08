@@ -13,5 +13,6 @@
         "string_view": "c",
         "array": "c",
         "string": "c"
-    }
+    },
+    "cortex-debug.variableUseNaturalFormat": true
 }

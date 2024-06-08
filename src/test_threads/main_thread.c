@@ -49,8 +49,7 @@ void mainThread(void const *argument)
 	uint8_t buffer_rx[COMMAND_FRAME_SIZE];
 	uint8_t buffer_tx[SCORE_FRAME_SIZE];
 	while (1) {
-
-		if (uart_receive(buffer_rx, COMMAND_FRAME_SIZE, 100) == 0) {
+		if (uart_receive(buffer_rx, COMMAND_FRAME_SIZE, 1000) == 0) {
 			commands_em command;
 			uint8_t arg_count, args[4];
 			if (DecodeCommandFrame(buffer_rx, &command, &arg_count, args) == 0) {

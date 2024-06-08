@@ -1,3 +1,10 @@
+/ {
+    chosen {
+        zephyr,console = &usart1;
+        zephyr,shell-uart = &usart1;
+    };
+};
+
 &timers2 {
 	st,prescaler = <0>;
 	counter {
@@ -7,4 +14,16 @@
 
 &usart2 {
 	current-speed = <38400>;
+};
+
+&can1 {
+	status = "disabled";
+};
+
+&i2c1 {
+	status = "disabled";
+};
+
+&spi1 {
+	status = "disabled";
 };
