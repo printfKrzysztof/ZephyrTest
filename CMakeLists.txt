@@ -7,6 +7,10 @@ project(counter)
 FILE(GLOB app_sources src/*.c src/test_threads/*.c)
 target_sources(app PRIVATE ${app_sources})
 
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -g0")
+
+
 if(DEFINED DEBUG_PRINTF)
   zephyr_compile_definitions(DEBUG_PRINTF=${DEBUG_PRINTF})
 endif()

@@ -12,8 +12,8 @@
 #ifndef THREADS_INC_H_
 #define THREADS_INC_H_
 
-#define MAX_THREADS         100
-#define MAX_TEST_PER_THREAD 100
+#define MAX_THREADS         20
+#define MAX_TEST_PER_THREAD 80
 
 #include <zephyr/device.h>
 #include "cmsis_os.h"

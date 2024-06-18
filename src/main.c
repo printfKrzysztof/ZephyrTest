@@ -77,7 +77,7 @@ int main(void)
 
 #ifndef TESTING_BARE_METAL
 	osThreadDef(mainThread, osPriorityNormal, 1, 1024);
-	osThreadId id = osThreadCreate(osThread(mainThread), NULL);
+	osThreadCreate(osThread(mainThread), NULL);
 #else
 	ret = counter_start(counter_dev);
 	if (ret != 0) {

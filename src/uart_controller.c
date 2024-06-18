@@ -46,8 +46,9 @@ int uart_receive(uint8_t *buffer, size_t length, int timeout)
 
 int uart_transmit(const uint8_t *buffer, size_t length, int timeout)
 {
-
-	for (int i = 0; i < length; i++) {
+	volatile size_t i = 0;
+	for (i = 0; i < length; i++) {
 		uart_poll_out(uart2, buffer[i]);
 	}
+	return 0;
 }

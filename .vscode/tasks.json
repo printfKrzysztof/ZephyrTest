@@ -2,9 +2,24 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Build",
+			"label": "Clean Build",
 			"type": "shell",
 			"command": "west build -p always -b nucleo_f303re ./",
+			"args": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build",
+			"type": "shell",
+			"command": "west build -b nucleo_f303re ./",
 			"args": [],
 			"group": {
 				"kind": "build",

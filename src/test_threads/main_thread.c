@@ -8,7 +8,8 @@
  * @copyright Copyright (c) 2024
  *
  */
-#include "stdlib.h"
+#include <stddef.h>
+#include <zephyr/toolchain.h>
 #include "inttypes.h"
 #include "threads_inc.h"
 #include "frame_controller.h"
@@ -16,9 +17,7 @@
 // Threads definitions
 
 osThreadId tasks[MAX_THREADS];
-#define defalut_stack_size 156
-
-osThreadDef_t os_thread_def[80];
+#define defalut_stack_size 255
 
 osSemaphoreDef(Semaphore);
 osMessageQDef(Queue, 100, uint32_t);
@@ -48,6 +47,7 @@ void mainThread(void const *argument)
 	(void)(argument);
 	uint8_t buffer_rx[COMMAND_FRAME_SIZE];
 	uint8_t buffer_tx[SCORE_FRAME_SIZE];
+
 	while (1) {
 		if (uart_receive(buffer_rx, COMMAND_FRAME_SIZE, 1000) == 0) {
 			commands_em command;
@@ -65,19 +65,15 @@ void mainThread(void const *argument)
 
 					uint8_t task_args[args[0]][2];
 					memset(task_args, 0, sizeof(task_args));
+					osThreadDef(forceSwitchThread, osPriorityNormal,
+						    MAX_THREADS, defalut_stack_size);
 					for (size_t i = 0; i < args[0]; i++) {
 						task_args[i][0] = i;
 						task_args[i][1] = args[1];
-						os_thread_def[i].pthread =
-							(os_pthread)forceSwitchThread;
-						os_thread_def[i].tpriority = osPriorityNormal;
-						os_thread_def[i].stacksize =
-							(defalut_stack_size + 3) / 4 *
-							4; // Align stack size
 
 						// Create the task
-						tasks[i] = osThreadCreate(&os_thread_def[i],
-									  task_args[i]);
+						tasks[i] = osThreadCreate(
+							osThread(forceSwitchThread), task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -101,9 +97,8 @@ void mainThread(void const *argument)
 						if (CodeScoreFrame(buffer_tx, CMD_TASK_FORCE_SWITCH,
 								   (uint16_t)(args[1] * 4),
 								   (uint8_t *)(values[i])) == 0) {
-							// HAL_UART_Transmit(&huart2,
-							// buffer_tx,SCORE_FRAME_SIZE,
-							// 1000);
+							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
+								      1000);
 						}
 						// osDelay(10);
 					}
@@ -121,25 +116,8 @@ void mainThread(void const *argument)
 					uint8_t task_count_sum = args[0] + args[1];
 					uint8_t task_args[task_count_sum][2];
 					for (size_t i = 0; i < task_count_sum; i++) {
-						task_args[i][0] = i;
-						task_args[i][1] = args[2];
-
-						os_thread_def[i].pthread =
-							(os_pthread)forceSwitchPriorityThread;
-						if (i < args[0]) {
-							os_thread_def[i].tpriority =
-								osPriorityBelowNormal;
-						} else {
-							os_thread_def[i].tpriority =
-								osPriorityAboveNormal;
-						}
-						os_thread_def[i].stacksize =
-							(defalut_stack_size + 3) / 4 *
-							4; // Align stack size
-
 						// Create the task
-						tasks[i] = osThreadCreate(&os_thread_def[i],
-									  task_args[i]);
+
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -183,15 +161,6 @@ void mainThread(void const *argument)
 						task_args[i][0] = i;
 						task_args[i][1] = args[1];
 
-						os_thread_def[i].pthread = (os_pthread)switchThread;
-						os_thread_def[i].tpriority = osPriorityNormal;
-						os_thread_def[i].stacksize =
-							(defalut_stack_size + 3) / 4 *
-							4; // Align stack size
-
-						// Create the task
-						tasks[i] = osThreadCreate(&os_thread_def[i],
-									  task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -235,22 +204,6 @@ void mainThread(void const *argument)
 						task_args[i][0] = i;
 						task_args[i][1] = args[2];
 
-						os_thread_def[i].pthread =
-							(os_pthread)switchPriorityThread;
-						if (i < args[0]) {
-							os_thread_def[i].tpriority =
-								osPriorityBelowNormal;
-						} else {
-							os_thread_def[i].tpriority =
-								osPriorityAboveNormal;
-						}
-						os_thread_def[i].stacksize =
-							(defalut_stack_size + 3) / 4 *
-							4; // Align stack size
-
-						// Create the task
-						tasks[i] = osThreadCreate(&os_thread_def[i],
-									  task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -297,16 +250,6 @@ void mainThread(void const *argument)
 						task_args[i][0] = i;
 						task_args[i][1] = args[1];
 
-						os_thread_def[i].pthread =
-							(os_pthread)semaphoreThread;
-						os_thread_def[i].tpriority = osPriorityNormal;
-						os_thread_def[i].stacksize =
-							(defalut_stack_size + 3) / 4 *
-							4; // Align stack size
-
-						// Create the task
-						tasks[i] = osThreadCreate(&os_thread_def[i],
-									  task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -349,25 +292,10 @@ void mainThread(void const *argument)
 						osMessageQ(Queue),
 						NULL); // Creating bionary semaphore (mutex)
 
-					os_thread_def[1].pthread = (os_pthread)queueRecieverThread;
-					os_thread_def[1].tpriority = osPriorityNormal;
-					os_thread_def[1].stacksize = (defalut_stack_size + 3) / 4 *
-								     4; // Align stack size
-
-					// Create the task
-					tasks[1] = osThreadCreate(&os_thread_def[1], args);
 					if (tasks[1] == NULL) {
 						// Handle error: Failed to create task
 					}
 
-					os_thread_def[0].pthread =
-						(os_pthread)queueTransmitterThread;
-					os_thread_def[0].tpriority = osPriorityNormal;
-					os_thread_def[0].stacksize = (defalut_stack_size + 3) / 4 *
-								     4; // Align stack size
-
-					// Create the task
-					tasks[0] = osThreadCreate(&os_thread_def[0], args);
 					if (tasks[0] == NULL) {
 						// Handle error: Failed to create task
 					}
