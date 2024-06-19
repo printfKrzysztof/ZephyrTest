@@ -55,3 +55,9 @@ void forceSwitchPriorityThread(void const *argument)
 		osDelay(10); // Forcing delay so that main_thread has a chance to take context
 	}
 }
+
+void forceSwitchPriority2Thread(void const *argument)
+{
+	// Just passthrough for name
+	forceSwitchPriorityThread(argument);
+}

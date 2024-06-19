@@ -12,7 +12,9 @@
         "counter.h": "c",
         "string_view": "c",
         "array": "c",
-        "string": "c"
+        "string": "c",
+        "initializer_list": "cpp",
+        "utility": "cpp"
     },
     "cortex-debug.variableUseNaturalFormat": true
 }
