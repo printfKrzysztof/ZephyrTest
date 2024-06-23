@@ -84,7 +84,6 @@ void mainThread(void const *argument)
 						}
 					}
 
-					osDelay(1);
 					counter_start(counter_dev);
 					start_flag = 1;
 					osDelay(10); // 10 milisecond block for main task
@@ -135,19 +134,17 @@ void mainThread(void const *argument)
 						// Create the task
 						task_args[i][0] = i;
 						task_args[i][1] = args[2];
-						if (i < task_args[0]) {
+						if (i < args[0]) {
 							os_thread_def_forceSwitchPriorityThread
 								.tpriority = osPriorityBelowNormal;
-							tasks[i] = osThreadCreate(
-								osThread(forceSwitchPriorityThread),
-								task_args[i]);
+
 						} else {
 							os_thread_def_forceSwitchPriorityThread
 								.tpriority = osPriorityAboveNormal;
-							tasks[i] = osThreadCreate(
-								osThread(forceSwitchPriorityThread),
-								task_args[i]);
 						}
+						tasks[i] = osThreadCreate(
+							osThread(forceSwitchPriorityThread),
+							task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -188,13 +185,14 @@ void mainThread(void const *argument)
 
 					uint8_t task_args[MAX_THREADS][2];
 					osThreadDef2(switchThread, osPriorityNormal, MAX_THREADS,
-						     defalut_stack_size, stacks_shared,
+						     defalut_stack_size * 2, stacks_shared,
 						     bitarray_shared);
 
 					for (size_t i = 0; i < args[0]; i++) {
 						task_args[i][0] = i;
 						task_args[i][1] = args[1];
-
+						tasks[i] = osThreadCreate(osThread(switchThread),
+									  task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -203,7 +201,7 @@ void mainThread(void const *argument)
 
 					counter_start(counter_dev);
 					start_flag = 1;
-					osDelay(1000); // 10 milisecond block for main task
+					osDelay(3000); // 10 milisecond block for main task
 
 					counter_stop(counter_dev);
 
@@ -235,26 +233,23 @@ void mainThread(void const *argument)
 					uint8_t task_args[MAX_THREADS][2];
 
 					osThreadDef2(switchPriorityThread, osPriorityBelowNormal,
-						     MAX_THREADS, defalut_stack_size, stacks_shared,
-						     bitarray_shared);
+						     MAX_THREADS, defalut_stack_size * 2,
+						     stacks_shared, bitarray_shared);
 
 					for (size_t i = 0; i < task_count_sum; i++) {
 						// Create the task
 						task_args[i][0] = i;
 						task_args[i][1] = args[2];
-						if (i < task_args[0]) {
+						if (i < args[0]) {
 							os_thread_def_switchPriorityThread
 								.tpriority = osPriorityBelowNormal;
-							tasks[i] = osThreadCreate(
-								osThread(switchPriorityThread),
-								task_args[i]);
 						} else {
 							os_thread_def_switchPriorityThread
 								.tpriority = osPriorityAboveNormal;
-							tasks[i] = osThreadCreate(
-								osThread(switchPriorityThread),
-								task_args[i]);
 						}
+						tasks[i] = osThreadCreate(
+							osThread(switchPriorityThread),
+							task_args[i]);
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
@@ -262,7 +257,7 @@ void mainThread(void const *argument)
 					}
 					counter_start(counter_dev);
 					start_flag = 1;
-					osDelay(1000); // 10 milisecond block for main task
+					osDelay(3000); // 10 milisecond block for main task
 
 					counter_stop(counter_dev);
 
@@ -297,7 +292,7 @@ void mainThread(void const *argument)
 						1); // Creating bionary semaphore (mutex)
 
 					osThreadDef2(semaphoreThread, osPriorityNormal, MAX_THREADS,
-						     defalut_stack_size, stacks_shared,
+						     defalut_stack_size * 2, stacks_shared,
 						     bitarray_shared);
 
 					for (size_t i = 0; i < args[0]; i++) {
