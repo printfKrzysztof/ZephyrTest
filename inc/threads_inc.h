@@ -12,7 +12,7 @@
 #ifndef THREADS_INC_H_
 #define THREADS_INC_H_
 
-#define MAX_THREADS         20
+#define MAX_THREADS         22
 #define MAX_TEST_PER_THREAD 80
 
 #include <zephyr/device.h>
@@ -23,7 +23,6 @@
 void mainThread(void const *argument);
 void forceSwitchThread(void const *argument);
 void forceSwitchPriorityThread(void const *argument);
-void forceSwitchPriority2Thread(void const *argument);
 void switchThread(void const *argument);
 void switchPriorityThread(void const *argument);
 void semaphoreThread(void const *argument);

@@ -19,6 +19,10 @@
 osThreadId tasks[MAX_THREADS];
 #define defalut_stack_size 255
 
+// Those need to be pre-defined to dynamically create threads
+static K_THREAD_STACK_ARRAY_DEFINE(stacks_shared, MAX_THREADS, CONFIG_CMSIS_THREAD_MAX_STACK_SIZE);
+SYS_BITARRAY_DEFINE_STATIC(bitarray_shared, MAX_THREADS);
+
 osSemaphoreDef(Semaphore);
 osMessageQDef(Queue, 100, uint32_t);
 
@@ -47,7 +51,6 @@ void mainThread(void const *argument)
 	(void)(argument);
 	uint8_t buffer_rx[COMMAND_FRAME_SIZE];
 	uint8_t buffer_tx[SCORE_FRAME_SIZE];
-
 	while (1) {
 		if (uart_receive(buffer_rx, COMMAND_FRAME_SIZE, 1000) == 0) {
 			commands_em command;
@@ -62,8 +65,9 @@ void mainThread(void const *argument)
 
 					// Argument 1 - Number of threads
 					// Argument 2 - Number of measurements per task
-					osThreadDef(forceSwitchThread, osPriorityNormal,
-						    MAX_THREADS, defalut_stack_size);
+					osThreadDef2(forceSwitchThread, osPriorityNormal,
+						     MAX_THREADS, defalut_stack_size, stacks_shared,
+						     bitarray_shared);
 					uint8_t task_args[args[0]][2];
 					memset(task_args, 0, sizeof(task_args));
 
@@ -120,34 +124,35 @@ void mainThread(void const *argument)
 					if (task_count_sum >= MAX_THREADS) {
 						break;
 					}
-					uint8_t task_args[20][2];
+					uint8_t task_args[MAX_THREADS][2];
 
-					// osThreadDef(forceSwitchPriorityThread,
-					// 	    osPriorityBelowNormal, MAX_THREADS / 2,
-					// 	    defalut_stack_size);
-					// osThreadDef(forceSwitchPriority2Thread,
-					// 	    osPriorityAboveNormal, MAX_THREADS / 2,
-					// 	    defalut_stack_size);
+					osThreadDef2(forceSwitchPriorityThread,
+						     osPriorityBelowNormal, MAX_THREADS,
+						     defalut_stack_size, stacks_shared,
+						     bitarray_shared);
 
-					// for (size_t i = 0; i < task_count_sum; i++) {
-					// 	// Create the task
-					// 	task_args[i][0] = i;
-					// 	task_args[i][1] = args[2];
-					// 	if (i < task_args[0]) {
-					// 		tasks[i] = osThreadCreate(
-					// 			osThread(forceSwitchPriorityThread),
-					// 			task_args[i]);
-					// 	} else {
-					// 		tasks[i] = osThreadCreate(
-					// 			osThread(
-					// 				forceSwitchPriority2Thread),
-					// 			task_args[i]);
-					// 	}
-					// 	if (tasks[i] == NULL) {
-					// 		// Handle error: Failed to create
-					// 		// task
-					// 	}
-					// }
+					for (size_t i = 0; i < task_count_sum; i++) {
+						// Create the task
+						task_args[i][0] = i;
+						task_args[i][1] = args[2];
+						if (i < task_args[0]) {
+							os_thread_def_forceSwitchPriorityThread
+								.tpriority = osPriorityBelowNormal;
+							tasks[i] = osThreadCreate(
+								osThread(forceSwitchPriorityThread),
+								task_args[i]);
+						} else {
+							os_thread_def_forceSwitchPriorityThread
+								.tpriority = osPriorityAboveNormal;
+							tasks[i] = osThreadCreate(
+								osThread(forceSwitchPriorityThread),
+								task_args[i]);
+						}
+						if (tasks[i] == NULL) {
+							// Handle error: Failed to create
+							// task
+						}
+					}
 
 					counter_start(counter_dev);
 					start_flag = 1;
@@ -159,8 +164,6 @@ void mainThread(void const *argument)
 					{
 						osThreadTerminate(tasks[i]);
 					}
-					// free(cm_thread_forceSwitchPriorityThread);
-					// free(cm_thread_forceSwitchPriority2Thread);
 
 					for (size_t i = 0; i < task_count_sum; i++) // For each task
 					{
@@ -173,6 +176,7 @@ void mainThread(void const *argument)
 						}
 						// osDelay(10);
 					}
+
 				} break;
 
 				case CMD_TASK_SWITCH: {
@@ -182,10 +186,11 @@ void mainThread(void const *argument)
 					// Argument 1 - Number of threads
 					// Argument 2 - Number of measurements per task
 
-					uint8_t task_args[args[0]][2];
-					osThreadDef(forceSwitchThread, osPriorityNormal,
-						    MAX_THREADS, defalut_stack_size);
-					os_thread_def_forceSwitchThread.cm_thread;
+					uint8_t task_args[MAX_THREADS][2];
+					osThreadDef2(switchThread, osPriorityNormal, MAX_THREADS,
+						     defalut_stack_size, stacks_shared,
+						     bitarray_shared);
+
 					for (size_t i = 0; i < args[0]; i++) {
 						task_args[i][0] = i;
 						task_args[i][1] = args[1];
@@ -212,9 +217,8 @@ void mainThread(void const *argument)
 						if (CodeScoreFrame(buffer_tx, CMD_TASK_SWITCH,
 								   (uint16_t)(args[1] * 4),
 								   (uint8_t *)(values[i])) == 0) {
-							// HAL_UART_Transmit(&huart2,
-							// buffer_tx,SCORE_FRAME_SIZE,
-							// 1000);
+							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
+								      1000);
 						}
 						// osDelay(10);
 					}
@@ -228,17 +232,34 @@ void mainThread(void const *argument)
 					// Argument 2 - Number of threads High
 					// Argument 3 - Number of measurements per task
 					uint8_t task_count_sum = args[0] + args[1];
-					uint8_t task_args[task_count_sum][2];
+					uint8_t task_args[MAX_THREADS][2];
+
+					osThreadDef2(switchPriorityThread, osPriorityBelowNormal,
+						     MAX_THREADS, defalut_stack_size, stacks_shared,
+						     bitarray_shared);
+
 					for (size_t i = 0; i < task_count_sum; i++) {
+						// Create the task
 						task_args[i][0] = i;
 						task_args[i][1] = args[2];
-
+						if (i < task_args[0]) {
+							os_thread_def_switchPriorityThread
+								.tpriority = osPriorityBelowNormal;
+							tasks[i] = osThreadCreate(
+								osThread(switchPriorityThread),
+								task_args[i]);
+						} else {
+							os_thread_def_switchPriorityThread
+								.tpriority = osPriorityAboveNormal;
+							tasks[i] = osThreadCreate(
+								osThread(switchPriorityThread),
+								task_args[i]);
+						}
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
 							// task
 						}
 					}
-
 					counter_start(counter_dev);
 					start_flag = 1;
 					osDelay(1000); // 10 milisecond block for main task
@@ -256,9 +277,8 @@ void mainThread(void const *argument)
 								   CMD_TASK_SWITCH_PRIORITY,
 								   (uint16_t)(args[2] * 4),
 								   (uint8_t *)(values[i])) == 0) {
-							// HAL_UART_Transmit(&huart2,
-							// buffer_tx,SCORE_FRAME_SIZE,
-							// 1000);
+							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
+								      1000);
 						}
 						// osDelay(10);
 					}
@@ -275,9 +295,17 @@ void mainThread(void const *argument)
 					semaphoreHandle = osSemaphoreCreate(
 						osSemaphore(Semaphore),
 						1); // Creating bionary semaphore (mutex)
+
+					osThreadDef2(semaphoreThread, osPriorityNormal, MAX_THREADS,
+						     defalut_stack_size, stacks_shared,
+						     bitarray_shared);
+
 					for (size_t i = 0; i < args[0]; i++) {
 						task_args[i][0] = i;
 						task_args[i][1] = args[1];
+
+						tasks[i] = osThreadCreate(osThread(semaphoreThread),
+									  task_args[i]);
 
 						if (tasks[i] == NULL) {
 							// Handle error: Failed to create
@@ -303,9 +331,8 @@ void mainThread(void const *argument)
 						if (CodeScoreFrame(buffer_tx, CMD_SEMAPHORE,
 								   (uint16_t)(args[1] * 4),
 								   (uint8_t *)(values[i])) == 0) {
-							// HAL_UART_Transmit(&huart2,
-							// buffer_tx,SCORE_FRAME_SIZE,
-							// 1000);
+							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
+								      1000);
 						}
 						// osDelay(10);
 					}
@@ -315,16 +342,24 @@ void mainThread(void const *argument)
 					resetValues(buffer_tx,
 						    buffer_rx); // Reseting all values
 
+					osThreadDef2(queueRecieverThread, osPriorityNormal, 2,
+						     defalut_stack_size, stacks_shared,
+						     bitarray_shared);
+
 					// Argument 1 - Number of measurements per task
 
 					queueHandle = osMessageCreate(
 						osMessageQ(Queue),
 						NULL); // Creating bionary semaphore (mutex)
-
+					tasks[1] =
+						osThreadCreate(osThread(queueRecieverThread), args);
 					if (tasks[1] == NULL) {
 						// Handle error: Failed to create task
 					}
-
+					os_thread_def_queueRecieverThread.pthread =
+						queueTransmitterThread;
+					tasks[0] =
+						osThreadCreate(osThread(queueRecieverThread), args);
 					if (tasks[0] == NULL) {
 						// Handle error: Failed to create task
 					}
@@ -347,9 +382,8 @@ void mainThread(void const *argument)
 						if (CodeScoreFrame(buffer_tx, CMD_QUEUE,
 								   (uint16_t)(args[0] * 4),
 								   (uint8_t *)(values[i])) == 0) {
-							// HAL_UART_Transmit(&huart2,
-							// buffer_tx,SCORE_FRAME_SIZE,
-							// 1000);
+							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
+								      1000);
 						}
 						// osDelay(10);
 					}
