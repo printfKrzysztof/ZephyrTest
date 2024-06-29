@@ -346,16 +346,19 @@ void mainThread(void const *argument)
 					queueHandle = osMessageCreate(
 						osMessageQ(Queue),
 						NULL); // Creating bionary semaphore (mutex)
-					tasks[1] =
-						osThreadCreate(osThread(queueRecieverThread), args);
-					if (tasks[1] == NULL) {
-						// Handle error: Failed to create task
-					}
+
 					os_thread_def_queueRecieverThread.pthread =
 						queueTransmitterThread;
 					tasks[0] =
 						osThreadCreate(osThread(queueRecieverThread), args);
 					if (tasks[0] == NULL) {
+						// Handle error: Failed to create task
+					}
+					os_thread_def_queueRecieverThread.pthread =
+						queueRecieverThread;
+					tasks[1] =
+						osThreadCreate(osThread(queueRecieverThread), args);
+					if (tasks[1] == NULL) {
 						// Handle error: Failed to create task
 					}
 
