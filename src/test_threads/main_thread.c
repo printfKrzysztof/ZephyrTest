@@ -86,7 +86,7 @@ void mainThread(void const *argument)
 
 					counter_start(counter_dev);
 					start_flag = 1;
-					osDelay(10); // 10 milisecond block for main task
+					osDelay(1000); // 10 milisecond block for main task
 
 					counter_stop(counter_dev);
 
@@ -153,7 +153,7 @@ void mainThread(void const *argument)
 
 					counter_start(counter_dev);
 					start_flag = 1;
-					osDelay(10); // 10 milisecond block for main task
+					osDelay(1000); // 10 milisecond block for main task
 
 					counter_stop(counter_dev);
 
@@ -310,7 +310,7 @@ void mainThread(void const *argument)
 
 					counter_start(counter_dev);
 					start_flag = 1;
-					osDelay(10); // 10 milisecond block for main task
+					osDelay(1000); // 10 milisecond block for main task
 
 					counter_stop(counter_dev);
 
@@ -364,7 +364,7 @@ void mainThread(void const *argument)
 
 					counter_start(counter_dev);
 					start_flag = 1;
-					osDelay(10); // 10 milisecond block for main task
+					osDelay(1000); // 10 milisecond block for main task
 
 					counter_stop(counter_dev);
 
