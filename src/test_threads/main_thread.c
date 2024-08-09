@@ -383,7 +383,15 @@ void mainThread(void const *argument)
 							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
 								      1000);
 						}
-						// osDelay(10);
+					}
+					for (size_t i = 2; i < 4; i++) // For each task
+					{
+						if (CodeScoreFrame(buffer_tx, CMD_QUEUE,
+								   (uint16_t)(1),
+								   (uint8_t *)(values[i])) == 0) {
+							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
+								      1000);
+						}
 					}
 				} break;
 

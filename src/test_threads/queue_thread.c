@@ -18,11 +18,12 @@ void queueTransmitterThread(void const *argument)
 	while (!start_flag) {
 		osDelay(1); // Forcing task switch so lower priority has a chance to take context
 	}
-	osEvent evt;
 	int i = 0;
 	while (1) {
 		counter_get_value(counter_dev, &values[0][i]);
-		osMessagePut(queueHandle, values[0][i++], osWaitForever);
+		while (osMessagePut(queueHandle, values[0][i++], osWaitForever) != osOK) {
+			values[2][0]++;
+		}
 		osThreadYield();
 		if (i >= max) {
 			break;
@@ -48,8 +49,10 @@ void queueRecieverThread(void const *argument)
 		evt = osMessageGet(queueHandle, osWaitForever);
 		if ((evt.status == osEventMessage) && (evt.value.v == values[0][i])) {
 			counter_get_value(counter_dev, &values[1][i++]);
+			osThreadYield();
+		} else {
+			values[3][0]++;
 		}
-		osThreadYield();
 
 		if (i >= max) {
 			break;
