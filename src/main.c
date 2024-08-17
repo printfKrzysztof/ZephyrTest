@@ -15,7 +15,7 @@
 struct counter_top_cfg top_cfg;
 uint32_t values[MAX_THREADS][MAX_TEST_PER_THREAD];
 int start_flag;
-osSemaphoreId semaphoreHandle;
+osMutexId mutexHandle;
 osMessageQId queueHandle;
 
 const struct device *counter_dev;

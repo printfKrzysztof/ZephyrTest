@@ -23,8 +23,8 @@ osThreadId tasks[MAX_THREADS];
 static K_THREAD_STACK_ARRAY_DEFINE(stacks_shared, MAX_THREADS, CONFIG_CMSIS_THREAD_MAX_STACK_SIZE);
 SYS_BITARRAY_DEFINE_STATIC(bitarray_shared, MAX_THREADS);
 
-osSemaphoreDef(Semaphore);
-osMessageQDef(Queue, 100, uint32_t);
+osMutexDef(Mutex);
+osMessageQDef(Queue, 1, uint32_t);
 
 void resetValues(uint8_t *buffer_tx, uint8_t *buffer_rx)
 {
@@ -287,9 +287,8 @@ void mainThread(void const *argument)
 					// Argument 2 - Number of measurements per task
 
 					uint8_t task_args[args[0]][2];
-					semaphoreHandle = osSemaphoreCreate(
-						osSemaphore(Semaphore),
-						1); // Creating bionary semaphore (mutex)
+					mutexHandle = osMutexCreate(osMutex(
+						Mutex)); // Creating bionary semaphore (mutex)
 
 					osThreadDef2(semaphoreThread, osPriorityNormal, MAX_THREADS,
 						     defalut_stack_size * 2, stacks_shared,
@@ -319,7 +318,7 @@ void mainThread(void const *argument)
 						osThreadTerminate(tasks[i]);
 					}
 
-					osSemaphoreDelete(semaphoreHandle);
+					osMutexDelete(mutexHandle);
 
 					for (size_t i = 0; i < args[0]; i++) // For each task
 					{
@@ -343,9 +342,7 @@ void mainThread(void const *argument)
 
 					// Argument 1 - Number of measurements per task
 
-					queueHandle = osMessageCreate(
-						osMessageQ(Queue),
-						NULL); // Creating bionary semaphore (mutex)
+					queueHandle = osMessageCreate(osMessageQ(Queue), NULL);
 
 					os_thread_def_queueRecieverThread.pthread =
 						queueTransmitterThread;

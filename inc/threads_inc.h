@@ -32,7 +32,7 @@ int uart_receive(uint8_t *buffer, size_t length, int timeout);
 int uart_transmit(const uint8_t *buffer, size_t length, int timeout);
 uint32_t get_time();
 
-extern osSemaphoreId semaphoreHandle;
+extern osMutexId mutexHandle;
 extern osMessageQId queueHandle;
 
 extern const struct device *counter_dev;

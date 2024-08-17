@@ -13,20 +13,18 @@
 
 void semaphoreThread(void const *argument)
 {
-	const uint8_t data = ((uint8_t *)argument)[0]; // Task number
-	const int max = ((uint8_t *)argument)[1];      // Number of measurements per task
+	volatile const uint8_t data = ((uint8_t *)argument)[0]; // Task number
+	const int max = ((uint8_t *)argument)[1];               // Number of measurements per task
 	while (!start_flag) {
 		osDelay(1); // Forcing task switch so lower priority has a chance to take context
 	}
 
 	int i = 0;
 	while (1) {
-		osSemaphoreWait(semaphoreHandle, osWaitForever);
+		osMutexWait(mutexHandle, osWaitForever);
 		counter_get_value(counter_dev, &values[data][i++]);
 		osThreadYield(); // Forcing task switch
-
-		osSemaphoreRelease(semaphoreHandle);
-		counter_get_value(counter_dev, &values[data][i++]);
+		osMutexRelease(mutexHandle);
 		osThreadYield(); // Forcing task switch
 
 		if (i == max) {

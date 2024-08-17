@@ -14,7 +14,14 @@
         "array": "c",
         "string": "c",
         "initializer_list": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "chrono": "c",
+        "compare": "c",
+        "executor": "c",
+        "functional": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "type_traits": "c"
     },
     "cortex-debug.variableUseNaturalFormat": true
 }
