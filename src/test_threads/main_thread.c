@@ -107,75 +107,6 @@ void mainThread(void const *argument)
 					}
 				} break;
 
-				case CMD_TASK_FORCE_SWITCH_PRIORITY:
-
-				{
-
-					resetValues(buffer_tx,
-						    buffer_rx); // Reseting all values
-
-					// Argument 1 - Number of threads Low
-					// Argument 2 - Number of threads High
-					// Argument 3 - Number of measurements per task
-
-					uint8_t task_count_sum = args[0] + args[1];
-
-					if (task_count_sum >= MAX_THREADS) {
-						break;
-					}
-					uint8_t task_args[MAX_THREADS][2];
-
-					osThreadDef2(forceSwitchPriorityThread,
-						     osPriorityBelowNormal, MAX_THREADS,
-						     defalut_stack_size, stacks_shared,
-						     bitarray_shared);
-
-					for (size_t i = 0; i < task_count_sum; i++) {
-						// Create the task
-						task_args[i][0] = i;
-						task_args[i][1] = args[2];
-						if (i < args[0]) {
-							os_thread_def_forceSwitchPriorityThread
-								.tpriority = osPriorityBelowNormal;
-
-						} else {
-							os_thread_def_forceSwitchPriorityThread
-								.tpriority = osPriorityAboveNormal;
-						}
-						tasks[i] = osThreadCreate(
-							osThread(forceSwitchPriorityThread),
-							task_args[i]);
-						if (tasks[i] == NULL) {
-							// Handle error: Failed to create
-							// task
-						}
-					}
-
-					counter_start(counter_dev);
-					start_flag = 1;
-					osDelay(1000); // 10 milisecond block for main task
-
-					counter_stop(counter_dev);
-
-					for (size_t i = 0; i < task_count_sum; i++) // For each task
-					{
-						osThreadTerminate(tasks[i]);
-					}
-
-					for (size_t i = 0; i < task_count_sum; i++) // For each task
-					{
-						if (CodeScoreFrame(buffer_tx,
-								   CMD_TASK_FORCE_SWITCH_PRIORITY,
-								   (uint16_t)(args[2] * 4),
-								   (uint8_t *)(values[i])) == 0) {
-							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
-								      1000);
-						}
-						// osDelay(10);
-					}
-
-				} break;
-
 				case CMD_TASK_SWITCH: {
 					resetValues(buffer_tx,
 						    buffer_rx); // Reseting all values
@@ -214,63 +145,6 @@ void mainThread(void const *argument)
 					{
 						if (CodeScoreFrame(buffer_tx, CMD_TASK_SWITCH,
 								   (uint16_t)(args[1] * 4),
-								   (uint8_t *)(values[i])) == 0) {
-							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
-								      1000);
-						}
-						// osDelay(10);
-					}
-				} break;
-
-				case CMD_TASK_SWITCH_PRIORITY: {
-					resetValues(buffer_tx,
-						    buffer_rx); // Reseting all values
-
-					// Argument 1 - Number of threads Low
-					// Argument 2 - Number of threads High
-					// Argument 3 - Number of measurements per task
-					uint8_t task_count_sum = args[0] + args[1];
-					uint8_t task_args[MAX_THREADS][2];
-
-					osThreadDef2(switchPriorityThread, osPriorityBelowNormal,
-						     MAX_THREADS, defalut_stack_size * 2,
-						     stacks_shared, bitarray_shared);
-
-					for (size_t i = 0; i < task_count_sum; i++) {
-						// Create the task
-						task_args[i][0] = i;
-						task_args[i][1] = args[2];
-						if (i < args[0]) {
-							os_thread_def_switchPriorityThread
-								.tpriority = osPriorityBelowNormal;
-						} else {
-							os_thread_def_switchPriorityThread
-								.tpriority = osPriorityAboveNormal;
-						}
-						tasks[i] = osThreadCreate(
-							osThread(switchPriorityThread),
-							task_args[i]);
-						if (tasks[i] == NULL) {
-							// Handle error: Failed to create
-							// task
-						}
-					}
-					counter_start(counter_dev);
-					start_flag = 1;
-					osDelay(3000); // 10 milisecond block for main task
-
-					counter_stop(counter_dev);
-
-					for (size_t i = 0; i < task_count_sum; i++) // For each task
-					{
-						osThreadTerminate(tasks[i]);
-					}
-
-					for (size_t i = 0; i < task_count_sum; i++) // For each task
-					{
-						if (CodeScoreFrame(buffer_tx,
-								   CMD_TASK_SWITCH_PRIORITY,
-								   (uint16_t)(args[2] * 4),
 								   (uint8_t *)(values[i])) == 0) {
 							uart_transmit(buffer_tx, SCORE_FRAME_SIZE,
 								      1000);
@@ -381,6 +255,7 @@ void mainThread(void const *argument)
 								      1000);
 						}
 					}
+					// Errors
 					for (size_t i = 2; i < 4; i++) // For each task
 					{
 						if (CodeScoreFrame(buffer_tx, CMD_QUEUE,
