@@ -26,7 +26,7 @@ void switchThread(void const *argument)
 	counter_get_value(counter_dev, &values[data][i]);
 	while (1) {
 		counter_get_value(counter_dev, &temp);
-		if ((temp - values[data][i]) > 1000) {
+		if ((temp - values[data][i]) > 500) {
 			values[data][++i] = temp;
 			values[data][++i] = temp;
 		} else {
